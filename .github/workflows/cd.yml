@@ -1,0 +1,59 @@
+name: CD
+
+# Builds the food.bringon.io image, pushes it to ghcr.io/bringon/food, and
+# dispatches release-food.yml in bringon/devops so the tag gets pinned into
+# docker/swarm/stacks/food/food.yml and deployed. Mirrors the pattern the
+# DevOps repo documents for SyntechD ("Dispatched automatically by the
+# SyntechD repo's CD after each image build").
+#
+# Requires this repo to hold CI_APP_ID / CI_APP_PRIVATE_KEY secrets for the
+# same bringon-ci GitHub App used across BringOn repos (owner-scoped, so it
+# can dispatch a workflow in bringon/devops) — see bringon/devops CLAUDE.md
+# "GitHub Secrets".
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    name: Build, push, release
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker build -t ghcr.io/bringon/food:sha-${{ github.sha }} -t ghcr.io/bringon/food:latest .
+
+      - name: Push image
+        run: |
+          docker push ghcr.io/bringon/food:sha-${{ github.sha }}
+          docker push ghcr.io/bringon/food:latest
+
+      - name: Generate DevOps App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+          owner: bringon
+          repositories: devops
+
+      - name: Trigger release-food.yml in bringon/devops
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh workflow run release-food.yml \
+            --repo bringon/devops \
+            --ref main \
+            -f image_tag=sha-${{ github.sha }}
+          echo "release-food.yml dispatched with tag sha-${{ github.sha }}"

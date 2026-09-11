@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}food.bringon.io — categorieën{% endblock %}
+{% block content %}
+<h1>Rangordes per categorie</h1>
+<p class="lede">
+  Elke score is alleen gedefinieerd tegenover andere producten in dezelfde categorie.
+  Er is geen score die categorieën met elkaar vergelijkt — dat is een bewuste keuze,
+  zie <a href="/methodologie">methodologie</a>.
+</p>
+
+<div class="category-grid">
+  {% for cat, rows in by_category.items() %}
+  <a class="category-card" href="/categorie/{{ cat }}">
+    <h2>{{ cat.replace('_', ' ') }}</h2>
+    <p class="count">{{ rows|length }} product{{ 'en' if rows|length != 1 else '' }}</p>
+    <ol class="preview">
+      {% for r in rows[:3] %}
+      <li>
+        <span class="food">{{ r.food }}</span>
+        <span class="latent {{ 'pos' if r.latent > 0 else 'neg' if r.latent < 0 else 'zero' }}">
+          {{ "%+.2f"|format(r.latent) }}
+        </span>
+      </li>
+      {% endfor %}
+      {% if rows|length > 3 %}
+      <li class="more">+ {{ rows|length - 3 }} meer…</li>
+      {% endif %}
+    </ol>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ category.replace('_', ' ') }} — food.bringon.io{% endblock %}
+{% block content %}
+<p><a href="/">&larr; alle categorieën</a></p>
+<h1>{{ category.replace('_', ' ') }}</h1>
+<p class="lede">Gerangschikt binnen deze categorie, hoogste latente score eerst. Dosisfeiten zijn per referentieportie.</p>
+
+<table class="ranking">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Product</th>
+      <th>Portie</th>
+      <th>Kcal</th>
+      <th>Vrije suiker</th>
+      <th>Zout</th>
+      <th>Verzadigd vet</th>
+      <th>Latente score</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>
+        {{ r.food }}
+        {% if r.ul_flags %}
+        <div class="flags">
+          {% for key, value in r.ul_flags.items() %}
+          <span class="flag" title="{{ key }}">⚠ {{ key.split('_')[0] }} {{ value }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </td>
+      <td>{{ r.portion_g }} g</td>
+      <td>{{ r.kcal }}</td>
+      <td>{{ r.free_sugar_g }} g</td>
+      <td>{{ r.sodium_g }} g</td>
+      <td>{{ r.saturated_fat_g }} g</td>
+      <td class="latent {{ 'pos' if r.latent > 0 else 'neg' if r.latent < 0 else 'zero' }}">
+        {{ "%+.2f"|format(r.latent) }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

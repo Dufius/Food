@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}food.bringon.io{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">food.bringon.io</a>
+    <nav>
+      <a href="/">Categorieën</a>
+      <a href="/methodologie">Methodologie</a>
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <p>v0.13 — score alleen vergeleken binnen dezelfde categorie. Geen score is een advies buiten die categorie.</p>
+  </footer>
+</body>
+</html>

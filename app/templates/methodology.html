@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Methodologie — food.bringon.io{% endblock %}
+{% block content %}
+<p><a href="/">&larr; alle categorieën</a></p>
+<h1>Methodologie (v0.13)</h1>
+
+<h2>Geen universele rangorde</h2>
+<p>
+  Een score is alleen gedefinieerd tegenover andere producten in dezelfde categorie.
+  Cross-categorie vergelijking wordt door de code geweigerd, niet alleen afgeraden in
+  een comment. "Is nori beter dan chips" is geen vraag die iemand bij het schap stelt.
+</p>
+
+<h2>Onbegrensde latente schaal</h2>
+<p>
+  De score is samengesteld als:
+</p>
+<pre>{{ latent.expr }}</pre>
+<p>
+  Gewichten: kwaliteit {{ latent.w_quality }}, schade {{ latent.w_harm }}, verwerking {{ latent.w_processing }}.
+  {{ latent.kind }}
+</p>
+<p>Eigenschappen: {{ latent.properties }}.</p>
+
+<h2>Dosisfeiten eerst</h2>
+<p>
+  Wat één realistische portie levert — in gram, plus eventuele bovengrens-vlag — is de
+  hoofduitkomst. De rangorde is secundair en wordt altijd gerapporteerd als positie
+  binnen de categorie, nooit als los getal.
+</p>
+
+<h2>Bovengrenzen (UL)</h2>
+<table class="ranking">
+  <thead><tr><th>Nutriënt</th><th>Bovengrens</th><th>Opmerking</th></tr></thead>
+  <tbody>
+    {% for n, lim in ul.items() %}
+    <tr>
+      <td>{{ n }}</td>
+      <td>{{ lim }}</td>
+      <td>{{ ul_note.get(n, '') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="lede">Een vlag verschijnt vanaf 50% van de bovengrens per referentieportie.</p>
+{% endblock %}
