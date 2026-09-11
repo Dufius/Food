@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Streepjescode scannen — food.bringon.io{% endblock %}
+{% block content %}
+<h1>Scan een streepjescode</h1>
+<p class="lede">
+  Voor alles buiten onze eigen 29 producten: haal de gegevens op bij
+  <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>,
+  een open productdatabase. Dit is <strong>niet</strong> onze v0.13-score — die heeft een
+  micronutriëntenpanel en referentiewaarden die Open Food Facts niet levert. Je krijgt hun eigen
+  gegevens plus onze algemene vuistregels voor wat de score zou verbeteren.
+</p>
+
+<div class="scan-panel">
+  <video id="preview" playsinline muted></video>
+  <p id="scan-status">Camera wordt gestart…</p>
+  <button id="stop-scan" type="button" class="btn btn-ghost" hidden>Stop camera</button>
+</div>
+
+<form id="manual-form" class="manual-form">
+  <label for="manual-barcode">Of voer de streepjescode handmatig in</label>
+  <div class="manual-row">
+    <input id="manual-barcode" inputmode="numeric" pattern="[0-9]{8,14}"
+           placeholder="bv. 8710398503968" aria-label="Streepjescode">
+    <button type="submit" class="btn btn-primary">Opzoeken</button>
+  </div>
+</form>
+
+<div id="result" hidden></div>
+
+<script>
+(function () {
+  const statusEl = document.getElementById('scan-status');
+  const video = document.getElementById('preview');
+  const stopBtn = document.getElementById('stop-scan');
+  const resultEl = document.getElementById('result');
+
+  async function lookup(code) {
+    statusEl.hidden = false;
+    statusEl.textContent = 'Opzoeken bij Open Food Facts…';
+    resultEl.hidden = true;
+    try {
+      const r = await fetch('/api/scan/' + encodeURIComponent(code));
+      const data = await r.json();
+      if (!r.ok) {
+        statusEl.textContent = data.error || 'Onbekende fout.';
+        return;
+      }
+      statusEl.textContent = '';
+      renderResult(code, data);
+    } catch (e) {
+      statusEl.textContent = 'Kon Open Food Facts niet bereiken. Controleer je verbinding.';
+    }
+  }
+
+  function renderResult(code, p) {
+    const per = p.per_100g || {};
+    const fmt = (v, unit) => (v === null || v === undefined) ? 'onbekend' : `${v} ${unit}`;
+    resultEl.hidden = false;
+    resultEl.innerHTML = `
+      <div class="off-disclaimer">Bron: Open Food Facts (streepjescode ${code}) — geen v0.13-score, alleen hun gegevens plus onze vuistregels.</div>
+      <div class="off-card">
+        ${p.image ? `<img src="${p.image}" alt="" class="off-image">` : ''}
+        <div>
+          <h2>${p.name}</h2>
+          <p class="muted">${[p.brand, p.quantity].filter(Boolean).join(' · ')}</p>
+          ${p.nutriscore ? `<span class="nutriscore nutriscore-${p.nutriscore.toLowerCase()}">Nutri-Score ${p.nutriscore}</span>` : ''}
+        </div>
+      </div>
+      <table class="ranking">
+        <tbody>
+          <tr><td>Energie</td><td>${fmt(per.kcal, 'kcal')} /100g</td></tr>
+          <tr><td>Suikers</td><td>${fmt(per.sugars_g, 'g')} /100g</td></tr>
+          <tr><td>Verzadigd vet</td><td>${fmt(per.saturated_fat_g, 'g')} /100g</td></tr>
+          <tr><td>Zout</td><td>${fmt(per.salt_g, 'g')} /100g</td></tr>
+          <tr><td>Vezels</td><td>${fmt(per.fiber_g, 'g')} /100g</td></tr>
+          <tr><td>Eiwit</td><td>${fmt(per.protein_g, 'g')} /100g</td></tr>
+        </tbody>
+      </table>
+      <h3>Wat zou de score verbeteren?</h3>
+      <ul class="advice">${(p.advies || []).map((a) => `<li>${a}</li>`).join('')}</ul>
+    `;
+  }
+
+  document.getElementById('manual-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = document.getElementById('manual-barcode').value.trim();
+    if (code) lookup(code);
+  });
+
+  if (!('BarcodeDetector' in window)) {
+    statusEl.textContent = 'Camera-scan wordt niet ondersteund in deze browser — gebruik het invoerveld hieronder.';
+    video.hidden = true;
+    return;
+  }
+
+  let scanning = true;
+  let stream = null;
+
+  stopBtn.addEventListener('click', () => {
+    scanning = false;
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+    stopBtn.hidden = true;
+    statusEl.textContent = 'Camera gestopt.';
+  });
+
+  (async () => {
+    try {
+      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+      await video.play();
+      stopBtn.hidden = false;
+      statusEl.textContent = 'Richt de camera op een streepjescode…';
+
+      while (scanning) {
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            scanning = false;
+            stream.getTracks().forEach((t) => t.stop());
+            stopBtn.hidden = true;
+            await lookup(codes[0].rawValue);
+            break;
+          }
+        } catch (err) {
+          // keep trying — a frame can occasionally fail to decode
+        }
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    } catch (err) {
+      statusEl.textContent = 'Kon de camera niet starten (toestemming geweigerd?) — gebruik het invoerveld hieronder.';
+      video.hidden = true;
+    }
+  })();
+})();
+</script>
+{% endblock %}

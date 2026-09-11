@@ -1,6 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Categorie niet gevonden — food.bringon.io{% endblock %}
+{% block title %}Niet gevonden — food.bringon.io{% endblock %}
 {% block content %}
+{% if category %}
 <h1>Onbekende categorie</h1>
 <p>Er is geen categorie "{{ category }}". <a href="/">Bekijk alle categorieën</a>.</p>
+{% else %}
+<h1>Onbekend product</h1>
+<p>Er is geen product met slug "{{ slug }}" in onze eigen data. <a href="/">Bekijk alle categorieën</a>
+   of <a href="/scannen">scan de streepjescode</a> als het een verpakt product is.</p>
+{% endif %}
 {% endblock %}

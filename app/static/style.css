@@ -6,9 +6,18 @@
   --card: #ffffff;
   --border: #e2e0da;
   --accent: #2f6f4f;
+  --accent-2: #e08a3c;
   --pos: #2f6f4f;
   --neg: #a3402f;
   --zero: #6b6b64;
+  --tier-top-bg: #e5f3ea;
+  --tier-top-fg: #1f6b42;
+  --tier-mid-bg: #eee9dd;
+  --tier-mid-fg: #7a6a3e;
+  --tier-low-bg: #ece9e4;
+  --tier-low-fg: #6b6b64;
+  --hero-grad-1: #eaf5ee;
+  --hero-grad-2: #fafaf8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,13 +28,29 @@
     --card: #1f2225;
     --border: #33373a;
     --accent: #6fbf94;
+    --accent-2: #e0a15c;
     --pos: #6fbf94;
     --neg: #e08a76;
     --zero: #9a9a94;
+    --tier-top-bg: #1d332470;
+    --tier-top-fg: #8fd6ac;
+    --tier-mid-bg: #33302270;
+    --tier-mid-fg: #d8c98a;
+    --tier-low-bg: #2a2c2e70;
+    --tier-low-fg: #9a9a94;
+    --hero-grad-1: #1d2b23;
+    --hero-grad-2: #16181a;
   }
 }
 
 * { box-sizing: border-box; }
+
+/* Without this, a same-specificity class rule (e.g. .btn { display: ... })
+   loaded after the UA stylesheet can beat [hidden]'s display:none and leave
+   a "hidden" element visible — toggle visibility with el.hidden, not
+   style.display, and this rule keeps that working regardless of what else
+   sets display on the element. */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -66,7 +91,54 @@ main {
   padding: 1.5rem 1.25rem 3rem;
 }
 
-.lede { color: var(--muted); max-width: 60ch; }
+.lede { color: var(--muted); max-width: 65ch; }
+
+/* --- hero ------------------------------------------------------------- */
+
+.hero {
+  background: linear-gradient(180deg, var(--hero-grad-1), var(--hero-grad-2));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero h1 { margin: 0 0 0.6rem; font-size: 1.9rem; }
+.hero-lede { color: var(--muted); max-width: 65ch; margin: 0 0 1.2rem; }
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost { background: transparent; color: var(--fg); border-color: var(--border); }
+
+.search-box input {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg);
+  font-size: 0.95rem;
+}
+
+/* --- category grid ------------------------------------------------------ */
 
 .category-grid {
   display: grid;
@@ -81,9 +153,10 @@ main {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1rem;
-  text-decoration: none;
   color: var(--fg);
 }
+
+.category-card-link { text-decoration: none; color: inherit; }
 
 .category-card h2 {
   margin: 0 0 0.25rem;
@@ -106,12 +179,43 @@ main {
 
 .category-card .preview li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.15rem 0;
+  padding: 0.2rem 0;
 }
 
-.category-card .more { color: var(--muted); font-size: 0.8rem; }
+.category-card .preview a {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--fg);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.category-card .preview .food {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tier-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.tier-dot.top { background: var(--tier-top-fg); }
+.tier-dot.mid { background: var(--tier-mid-fg); }
+.tier-dot.low { background: var(--tier-low-fg); }
+
+.tier-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 
 .latent.pos { color: var(--pos); font-variant-numeric: tabular-nums; }
 .latent.neg { color: var(--neg); font-variant-numeric: tabular-nums; }
@@ -141,11 +245,151 @@ table.ranking th { color: var(--muted); font-weight: 600; }
 
 .flag {
   font-size: 0.75rem;
-  color: var(--neg);
-  border: 1px solid var(--neg);
+  color: var(--accent-2);
+  border: 1px solid var(--accent-2);
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
 }
+
+.flag.flag-ul {
+  color: var(--neg);
+  border-color: var(--neg);
+}
+
+/* --- tier badges --------------------------------------------------------- */
+
+.tier-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+}
+.tier-badge.top { background: var(--tier-top-bg); color: var(--tier-top-fg); }
+.tier-badge.mid { background: var(--tier-mid-bg); color: var(--tier-mid-fg); }
+.tier-badge.low { background: var(--tier-low-bg); color: var(--tier-low-fg); }
+
+.tier-badge-lg { font-size: 0.95rem; padding: 0.35rem 0.9rem; }
+
+/* --- product detail ------------------------------------------------------ */
+
+.product-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.product-head h1 { margin: 0; }
+
+.rationale-box, .flags-box, .compare-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.2rem 0;
+}
+
+.rationale-box h2, .flags-box h2, .compare-box h2 { margin-top: 0; font-size: 1.1rem; }
+.rationale-box h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+
+.advice {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+.advice li { margin-bottom: 0.3rem; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stat-label { font-size: 0.78rem; color: var(--muted); }
+.stat-value { font-size: 1.3rem; font-weight: 700; }
+
+.flag-list { list-style: none; margin: 0; padding: 0; }
+.flag-list li {
+  padding: 0.3rem 0;
+  color: var(--accent-2);
+}
+.flag-list li.flag-ul { color: var(--neg); }
+
+tr.is-current { font-weight: 700; }
+
+/* --- Open Food Facts scan ------------------------------------------------ */
+
+.scan-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  margin: 1.2rem 0;
+}
+
+#preview {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 10px;
+  background: #000;
+}
+
+.manual-form { margin: 1.2rem 0; }
+.manual-form label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: var(--muted); }
+.manual-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.manual-row input {
+  flex: 1 1 220px;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.off-disclaimer {
+  background: var(--tier-mid-bg);
+  color: var(--tier-mid-fg);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.off-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.off-image { width: 72px; height: 72px; object-fit: contain; border-radius: 8px; background: #fff; }
+.off-card h2 { margin: 0 0 0.2rem; }
+
+.nutriscore {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+}
+.nutriscore-a { background: #2f8f4f; }
+.nutriscore-b { background: #7fb93e; }
+.nutriscore-c { background: #e0b83c; }
+.nutriscore-d { background: #e08a3c; }
+.nutriscore-e { background: #c9432f; }
 
 pre {
   background: var(--card);

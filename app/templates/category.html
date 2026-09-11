@@ -3,13 +3,18 @@
 {% block content %}
 <p><a href="/">&larr; alle categorieën</a></p>
 <h1>{{ category.replace('_', ' ') }}</h1>
-<p class="lede">Gerangschikt binnen deze categorie, hoogste latente score eerst. Dosisfeiten zijn per referentieportie.</p>
+<p class="lede">
+  Gerangschikt binnen deze categorie, hoogste latente score eerst. "Topkeuze"/"Laagste" is altijd
+  relatief aan de andere producten hier — geen absoluut oordeel. Vlaggen (suiker, zout, verzadigd vet,
+  bovengrens) zijn dat wel: die gelden ongeacht categorie.
+</p>
 
 <table class="ranking">
   <thead>
     <tr>
       <th>#</th>
       <th>Product</th>
+      <th>Keuze</th>
       <th>Portie</th>
       <th>Kcal</th>
       <th>Vrije suiker</th>
@@ -19,26 +24,27 @@
     </tr>
   </thead>
   <tbody>
-    {% for r in rows %}
+    {% for e in entries %}
     <tr>
       <td>{{ loop.index }}</td>
       <td>
-        {{ r.food }}
-        {% if r.ul_flags %}
+        <a href="/product/{{ e.verdict.slug }}">{{ e.score.food }}</a>
+        {% if e.verdict.flags %}
         <div class="flags">
-          {% for key, value in r.ul_flags.items() %}
-          <span class="flag" title="{{ key }}">⚠ {{ key.split('_')[0] }} {{ value }}</span>
+          {% for f in e.verdict.flags %}
+          <span class="flag {{ 'flag-ul' if f.kind == 'ul' else '' }}">⚠ {{ f.label }}</span>
           {% endfor %}
         </div>
         {% endif %}
       </td>
-      <td>{{ r.portion_g }} g</td>
-      <td>{{ r.kcal }}</td>
-      <td>{{ r.free_sugar_g }} g</td>
-      <td>{{ r.sodium_g }} g</td>
-      <td>{{ r.saturated_fat_g }} g</td>
-      <td class="latent {{ 'pos' if r.latent > 0 else 'neg' if r.latent < 0 else 'zero' }}">
-        {{ "%+.2f"|format(r.latent) }}
+      <td><span class="tier-badge {{ e.verdict.tier }}">{{ e.verdict.tier_label }}</span></td>
+      <td>{{ e.score.portion_g }} g</td>
+      <td>{{ e.score.kcal }}</td>
+      <td>{{ e.score.free_sugar_g }} g</td>
+      <td>{{ e.score.sodium_g }} g</td>
+      <td>{{ e.score.saturated_fat_g }} g</td>
+      <td class="latent {{ 'pos' if e.score.latent > 0 else 'neg' if e.score.latent < 0 else 'zero' }}">
+        {{ "%+.2f"|format(e.score.latent) }}
       </td>
     </tr>
     {% endfor %}

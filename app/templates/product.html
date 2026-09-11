@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% set score = entry.score %}
+{% set verdict = entry.verdict %}
+{% block title %}{{ score.food }} — food.bringon.io{% endblock %}
+{% block content %}
+<p><a href="/categorie/{{ score.category }}">&larr; {{ score.category.replace('_', ' ') }}</a></p>
+
+<div class="product-head">
+  <h1>{{ score.food }}</h1>
+  <span class="tier-badge tier-badge-lg {{ verdict.tier }}">{{ verdict.tier_label }}</span>
+</div>
+<p class="lede">Positie {{ verdict.rank }} van {{ verdict.of }} binnen <strong>{{ score.category.replace('_', ' ') }}</strong> — vergelijking geldt alleen binnen deze categorie.</p>
+
+<section class="rationale-box">
+  <h2>Gezondheidsscore met onderbouwing</h2>
+  <p>{{ verdict.rationale }}</p>
+  {% if verdict.advice %}
+  <h3>Wat zou de score verbeteren?</h3>
+  <ul class="advice">
+    {% for tip in verdict.advice %}
+    <li>{{ tip }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-label">Portie</span>
+    <span class="stat-value">{{ score.portion_g }} g</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Energie</span>
+    <span class="stat-value">{{ score.kcal }} kcal</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Vrije suiker</span>
+    <span class="stat-value">{{ score.free_sugar_g }} g</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Zout</span>
+    <span class="stat-value">{{ score.sodium_g }} g</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Verzadigd vet</span>
+    <span class="stat-value">{{ score.saturated_fat_g }} g</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Latente score</span>
+    <span class="stat-value latent {{ 'pos' if score.latent > 0 else 'neg' if score.latent < 0 else 'zero' }}">{{ "%+.2f"|format(score.latent) }}</span>
+  </div>
+</section>
+
+{% if verdict.flags %}
+<section class="flags-box">
+  <h2>Aandachtspunten (gelden ongeacht categorie)</h2>
+  <ul class="flag-list">
+    {% for f in verdict.flags %}
+    <li class="{{ 'flag-ul' if f.kind == 'ul' else '' }}">⚠ {{ f.label }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if verdict.of > 1 %}
+<section class="compare-box">
+  <h2>Ter vergelijking binnen {{ score.category.replace('_', ' ') }}</h2>
+  <table class="ranking">
+    <thead><tr><th></th><th>Product</th><th>Latente score</th></tr></thead>
+    <tbody>
+      <tr class="{{ 'is-current' if best.score.food == score.food else '' }}">
+        <td>Hoogste</td>
+        <td><a href="/product/{{ best.verdict.slug }}">{{ best.score.food }}</a></td>
+        <td class="latent {{ 'pos' if best.score.latent > 0 else 'neg' if best.score.latent < 0 else 'zero' }}">{{ "%+.2f"|format(best.score.latent) }}</td>
+      </tr>
+      <tr class="{{ 'is-current' if worst.score.food == score.food else '' }}">
+        <td>Laagste</td>
+        <td><a href="/product/{{ worst.verdict.slug }}">{{ worst.score.food }}</a></td>
+        <td class="latent {{ 'pos' if worst.score.latent > 0 else 'neg' if worst.score.latent < 0 else 'zero' }}">{{ "%+.2f"|format(worst.score.latent) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

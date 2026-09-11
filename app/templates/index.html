@@ -1,32 +1,61 @@
 {% extends "base.html" %}
-{% block title %}food.bringon.io — categorieën{% endblock %}
+{% block title %}food.bringon.io — weet wat je eet{% endblock %}
 {% block content %}
-<h1>Rangordes per categorie</h1>
-<p class="lede">
-  Elke score is alleen gedefinieerd tegenover andere producten in dezelfde categorie.
-  Er is geen score die categorieën met elkaar vergelijkt — dat is een bewuste keuze,
-  zie <a href="/methodologie">methodologie</a>.
-</p>
+<section class="hero">
+  <h1>Weet wat je eet</h1>
+  <p class="hero-lede">
+    Voor elk product: een gezondheidsscore <strong>met onderbouwing</strong> — nooit een kaal getal.
+    Vergelijking gebeurt binnen dezelfde categorie (appels met appels), en aparte waarschuwingen voor
+    suiker, zout, verzadigd vet en bovengrenzen gelden altijd, ongeacht categorie.
+  </p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="/scannen">📷 Scan een streepjescode</a>
+    <a class="btn btn-ghost" href="/methodologie">Hoe werkt dit?</a>
+  </div>
+  <div class="search-box">
+    <input id="site-search" type="search" placeholder="Zoek een product, bv. Cola of Walnoten…" aria-label="Zoek een product">
+  </div>
+</section>
 
-<div class="category-grid">
-  {% for cat, rows in by_category.items() %}
-  <a class="category-card" href="/categorie/{{ cat }}">
-    <h2>{{ cat.replace('_', ' ') }}</h2>
-    <p class="count">{{ rows|length }} product{{ 'en' if rows|length != 1 else '' }}</p>
+<div class="category-grid" id="category-grid">
+  {% for cat, entries in by_category.items() %}
+  <div class="category-card" data-category="{{ cat }}">
+    <a class="category-card-link" href="/categorie/{{ cat }}">
+      <h2>{{ cat.replace('_', ' ') }}</h2>
+      <p class="count">{{ entries|length }} product{{ 'en' if entries|length != 1 else '' }}</p>
+    </a>
     <ol class="preview">
-      {% for r in rows[:3] %}
-      <li>
-        <span class="food">{{ r.food }}</span>
-        <span class="latent {{ 'pos' if r.latent > 0 else 'neg' if r.latent < 0 else 'zero' }}">
-          {{ "%+.2f"|format(r.latent) }}
-        </span>
+      {% for e in entries %}
+      <li class="preview-item" data-food="{{ e.score.food|lower }}">
+        <a href="/product/{{ e.verdict.slug }}">
+          <span class="tier-dot {{ e.verdict.tier }}" title="{{ e.verdict.tier_label }}"></span>
+          <span class="food">{{ e.score.food }}</span>
+        </a>
+        <span class="tier-label {{ e.verdict.tier }}">{{ e.verdict.tier_label }}</span>
       </li>
       {% endfor %}
-      {% if rows|length > 3 %}
-      <li class="more">+ {{ rows|length - 3 }} meer…</li>
-      {% endif %}
     </ol>
-  </a>
+  </div>
   {% endfor %}
 </div>
+
+<script>
+(function () {
+  const search = document.getElementById('site-search');
+  const cards = Array.from(document.querySelectorAll('#category-grid .category-card'));
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    cards.forEach((card) => {
+      const items = Array.from(card.querySelectorAll('.preview-item'));
+      let anyMatch = q === '';
+      items.forEach((item) => {
+        const match = q === '' || item.dataset.food.includes(q);
+        item.hidden = !match;
+        if (match) anyMatch = true;
+      });
+      card.hidden = !anyMatch;
+    });
+  });
+})();
+</script>
 {% endblock %}
