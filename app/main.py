@@ -160,6 +160,11 @@ def scan_page(request: Request):
     return templates.TemplateResponse(request, "scan.html", {})
 
 
+@app.get("/behoefte")
+def quantity_page(request: Request):
+    return templates.TemplateResponse(request, "behoefte.html", {})
+
+
 @app.get("/methodologie")
 def methodology(request: Request):
     return templates.TemplateResponse(

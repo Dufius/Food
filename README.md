@@ -50,6 +50,14 @@ from the reference implementation, kept here for provenance and so the
 math has real unit-test coverage (`tests/test_scoring.py`), not because the
 dashboard calls it live today.
 
+3. **A QUANTITY layer** (`/behoefte`, `app/static/quantity.js`) — inspired by
+   a separate FQQ v0.20 research prototype: the same food means a different
+   fraction of someone's day depending on their body and activity. This is
+   **100% client-side**: nothing about a person's body is ever sent to or
+   stored by this server, precisely so it doesn't need the database/auth
+   this repo deliberately doesn't have. See "The QUANTITY layer" below for
+   what it does, what it deliberately doesn't, and why.
+
 ## Why the dashboard doesn't compute scores live
 
 `parts()` needs two inputs neither of which is part of this repo:
@@ -76,6 +84,48 @@ Once `v10_spec.json` and `v10_fixtures.json` are available:
 A live-compute API (`POST` nutrients in, get a score back) is a natural v2
 once those inputs are available; `app/scoring.py` already has the pure
 functions for it, they're just not wired to a route yet.
+
+## The QUANTITY layer
+
+`/behoefte` is a calculator: given whatever a person is willing to enter
+(measured resting energy expenditure, fat-free mass, or just age/sex/
+height/weight — most-reliable-wins, same fallback idea as the personalization
+hierarchy below), it estimates a daily energy target and shows what a
+specific food's kcal is as a fraction of what's left today. Every number is
+computed in `app/static/quantity.js`, in the browser; the server never sees
+it. A profile is optionally kept in `localStorage` for convenience across
+pages, with a visible "wis mijn gegevens" (clear my data) button.
+
+**Personalization fallback hierarchy** (most reliable wins):
+measured REE → fat-free mass (Katch-McArdle, 1996: `370 + 21.6*FFM`) →
+age/sex/height/weight (Mifflin-St Jeor, 1990) → no personal data (falls
+back to the EU nutrition-label reference intake, 2000 kcal/day for an
+average adult — a real, cited figure, not an invented one).
+
+These formulas are real and cited, chosen because they're the standard
+ones — **not** reverse-engineered to match the FQQ v0.20 bundle's numbers.
+One good sign they're the right choice anyway: the bundle's own write-up
+calls its FFM-based formula "Cunningham" (`500 + 22*FFM`), but its actual
+test numbers (1190.8 kcal at FFM=38kg, 2054.8 kcal at FFM=78kg) only match
+Katch-McArdle. `tests/test_quantity_js.py` checks this against the bundle's
+own fixtures.
+
+**Deliberately not built, and why** (see `CLAUDE.md` "What NOT to do"):
+- **No geography-based prior.** The FQQ v0.20 prototype used synthetic
+  region/district data with Bayesian shrinkage toward a parent population.
+  Real version of that idea risks reading as a claim about what people
+  "from region X" need — even framed as a prior, not a fact. Skipped
+  rather than shipped half-safely.
+- **No FORM (can-this-person-physically-eat-this) safety filtering** —
+  e.g. allergens, choking hazards. A false negative there is a real safety
+  risk and needs a far more rigorous, validated dataset than exists here.
+- **No day-boundary tracking / food diary.** "Al gegeten vandaag" is a
+  single manual number a person re-enters, not an auto-accumulating log —
+  building that starts to look like a calorie-tracking app, a materially
+  bigger product than a "what does this food mean for me" calculator.
+
+Every screen this touches repeats: **research prototype, not medical or
+dietary advice** — population equations, not measured metabolism.
 
 ## Barcode scanning
 
@@ -138,9 +188,9 @@ app/
 ├── dashboard.py      Wires FoodScore + Verdict together, indexes by slug
 ├── off.py           Open Food Facts barcode lookup + generic advice
 ├── scoring.py        Ported v0.13 scoring engine (latent, dose_facts, canary)
-├── templates/        Jinja2 HTML (index, category, product, scan, methodology)
-└── static/           style.css, favicon.svg
+├── templates/        Jinja2 HTML (index, category, product, scan, behoefte, methodology)
+└── static/           style.css, favicon.svg, quantity.js (client-side QUANTITY math)
 data/
 └── v13_results.csv   Current scoring snapshot
-tests/                 pytest suite (scoring math, verdicts, OFF, API/HTML)
+tests/                 pytest suite (scoring math, verdicts, OFF, API/HTML, quantity.js via node)
 ```

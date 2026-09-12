@@ -62,6 +62,37 @@
 </section>
 {% endif %}
 
+
+<section class="rationale-box" id="quantity-box" data-kcal="{{ score.kcal }}">
+  <h2>Wat betekent dit voor mijn dag?</h2>
+  <div id="quantity-box-content">
+    <p class="lede">
+      Nog geen profiel opgeslagen. <a href="/behoefte">Vul je gegevens in</a> om te zien welk deel
+      van je geschatte dagbehoefte deze portie is.
+    </p>
+  </div>
+</section>
+<script src="/static/quantity.js"></script>
+<script>
+(function () {
+  const profile = fqqLoadProfile();
+  if (!profile) return;
+  const box = document.getElementById("quantity-box");
+  const content = document.getElementById("quantity-box-content");
+  const kcal = parseFloat(box.dataset.kcal);
+  const r = fqqRemainingNeed(profile);
+  const pct = r.tdee > 0 ? (kcal / r.tdee) * 100 : null;
+  content.innerHTML = `
+    <p>Deze portie (${kcal} kcal) is ongeveer <strong>${pct !== null ? pct.toFixed(0) : "?"}%</strong>
+      van je geschatte dagbehoefte (${Math.round(r.tdee)} kcal, bron: ${r.source}).</p>
+    ${r.remaining > 0
+      ? `<p>Resterende geschatte behoefte vandaag (vóór deze portie): ${Math.round(r.remaining)} kcal.</p>`
+      : `<p>Je zat al boven je geschatte dagbehoefte vóór deze portie.</p>`}
+    <p class="lede">Schatting, geen voorschrift — zie <a href="/behoefte">mijn behoefte</a>.</p>
+  `;
+})();
+</script>
+
 {% if verdict.of > 1 %}
 <section class="compare-box">
   <h2>Ter vergelijking binnen {{ score.category.replace('_', ' ') }}</h2>

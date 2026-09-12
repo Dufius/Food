@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Wat heeft mijn lichaam nu nodig? — food.bringon.io{% endblock %}
+{% block content %}
+<h1>Wat heeft mijn lichaam nu nodig?</h1>
+<p class="lede">
+  Dezelfde 550 kcal weegt anders voor een lichaam van 52 kg dan voor een lichaam van 95 kg.
+  Dit rekent — puur op je eigen apparaat, niets wordt naar onze server gestuurd of opgeslagen —
+  een schatting uit van je energiebehoefte, en toont daarna per product wat een portie daarvan betekent.
+</p>
+
+<div class="off-disclaimer">
+  <strong>Onderzoeksprototype, geen medisch of diëtistisch advies.</strong>
+  Mifflin-St Jeor en Katch-McArdle zijn populatie-vergelijkingen, geen gemeten metabolisme — bij
+  elke individuele afwijking kan de werkelijkheid afwijken. Gebruik dit als grove indicatie, niet
+  als voorschrift. Zie <a href="/methodologie">methodologie</a> voor de volledige onderbouwing en
+  wat we bewust <em>niet</em> hebben gebouwd (geografische aannames, allergie-veiligheid).
+</div>
+
+<form id="quantity-form" class="quantity-form">
+  <fieldset>
+    <legend>1. Rustmetabolisme — vul in wat je weet, hoe hoger hoe betrouwbaarder</legend>
+
+    <label for="measuredReeKcal">Gemeten rustmetabolisme (kcal/dag) — bijv. via indirecte calorimetrie</label>
+    <input id="measuredReeKcal" name="measuredReeKcal" type="number" min="0" placeholder="onbekend">
+
+    <label for="ffmKg">Vetvrije massa / FFM (kg) — bijv. via impedantiemeting of DEXA</label>
+    <input id="ffmKg" name="ffmKg" type="number" min="0" placeholder="onbekend">
+
+    <div class="quantity-row">
+      <div>
+        <label for="sex">Geslacht</label>
+        <select id="sex" name="sex">
+          <option value="">onbekend</option>
+          <option value="m">man</option>
+          <option value="v">vrouw</option>
+        </select>
+      </div>
+      <div>
+        <label for="ageYears">Leeftijd (jaar)</label>
+        <input id="ageYears" name="ageYears" type="number" min="0">
+      </div>
+      <div>
+        <label for="heightCm">Lengte (cm)</label>
+        <input id="heightCm" name="heightCm" type="number" min="0">
+      </div>
+      <div>
+        <label for="weightKg">Gewicht (kg)</label>
+        <input id="weightKg" name="weightKg" type="number" min="0">
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>2. Vandaag</legend>
+    <div class="quantity-row">
+      <div>
+        <label for="activityLevel">Activiteitsniveau</label>
+        <select id="activityLevel" name="activityLevel">
+          <option value="sedentary">Weinig tot geen beweging</option>
+          <option value="light">Licht actief (1-3 dagen/week)</option>
+          <option value="moderate">Matig actief (3-5 dagen/week)</option>
+          <option value="active">Actief (6-7 dagen/week)</option>
+          <option value="very_active">Zeer actief (zwaar werk / 2x per dag)</option>
+        </select>
+      </div>
+      <div>
+        <label for="extraExerciseKcal">Extra inspanning vandaag (kcal)</label>
+        <input id="extraExerciseKcal" name="extraExerciseKcal" type="number" min="0" placeholder="0">
+      </div>
+      <div>
+        <label for="consumedTodayKcal">Al gegeten vandaag (kcal)</label>
+        <input id="consumedTodayKcal" name="consumedTodayKcal" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="hero-actions">
+    <button type="submit" class="btn btn-primary">Bereken</button>
+    <button type="button" id="clear-profile" class="btn btn-ghost">Wis mijn gegevens</button>
+  </div>
+</form>
+
+<div id="quantity-result" hidden></div>
+
+<script src="/static/quantity.js"></script>
+<script>
+(function () {
+  const form = document.getElementById("quantity-form");
+  const resultEl = document.getElementById("quantity-result");
+  const FIELDS = [
+    "measuredReeKcal", "ffmKg", "sex", "ageYears", "heightCm", "weightKg",
+    "activityLevel", "extraExerciseKcal", "consumedTodayKcal",
+  ];
+
+  function readForm() {
+    const profile = {};
+    FIELDS.forEach((f) => { profile[f] = document.getElementById(f).value; });
+    return profile;
+  }
+
+  function fillForm(profile) {
+    FIELDS.forEach((f) => {
+      if (profile[f] !== undefined && profile[f] !== null) {
+        document.getElementById(f).value = profile[f];
+      }
+    });
+  }
+
+  function render(profile) {
+    const r = fqqRemainingNeed(profile);
+    resultEl.hidden = false;
+    resultEl.innerHTML = `
+      <section class="rationale-box">
+        <h2>Geschatte dagbehoefte: ${Math.round(r.tdee)} kcal</h2>
+        <p>Bron: <strong>${r.source}</strong> (betrouwbaarheid: ${r.confidence}).</p>
+        <p>Al genuttigd vandaag: ${r.consumed} kcal.</p>
+        ${r.surplus > 0
+          ? `<p>Je zit ${Math.round(r.surplus)} kcal boven de geschatte dagbehoefte.</p>`
+          : `<p>Resterende geschatte behoefte vandaag: <strong>${Math.round(r.remaining)} kcal</strong>.</p>`}
+      </section>
+    `;
+  }
+
+  const saved = fqqLoadProfile();
+  if (saved) {
+    fillForm(saved);
+    render(saved);
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const profile = readForm();
+    fqqSaveProfile(profile);
+    render(profile);
+  });
+
+  document.getElementById("clear-profile").addEventListener("click", () => {
+    fqqClearProfile();
+    form.reset();
+    resultEl.hidden = true;
+  });
+})();
+</script>
+{% endblock %}

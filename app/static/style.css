@@ -391,6 +391,39 @@ tr.is-current { font-weight: 700; }
 .nutriscore-d { background: #e08a3c; }
 .nutriscore-e { background: #c9432f; }
 
+/* --- quantity calculator -------------------------------------------------- */
+
+.quantity-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.2rem 1.2rem;
+  margin: 1rem 0;
+}
+.quantity-form legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+.quantity-form label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0.7rem 0 0.25rem;
+}
+.quantity-form input, .quantity-form select {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.95rem;
+}
+.quantity-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+}
+
 pre {
   background: var(--card);
   border: 1px solid var(--border);

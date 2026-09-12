@@ -90,6 +90,20 @@ def test_api_product_unknown_is_404():
     assert client.get("/api/product/does-not-exist").status_code == 404
 
 
+def test_quantity_page_renders_disclaimer():
+    r = client.get("/behoefte")
+    assert r.status_code == 200
+    assert "onderzoeksprototype" in r.text.lower()
+    assert "geen medisch" in r.text.lower()
+
+
+def test_product_page_includes_quantity_script_hook():
+    r = client.get("/product/cola")
+    assert r.status_code == 200
+    assert "quantity.js" in r.text
+    assert 'id="quantity-box"' in r.text
+
+
 def test_scan_page_renders():
     r = client.get("/scannen")
     assert r.status_code == 200

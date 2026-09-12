@@ -1,9 +1,12 @@
 # food.bringon.io — CLAUDE.md
 
-FastAPI dashboard for BringOn's v0.13 food scoring model, plus a barcode
-scanner (Open Food Facts) for anything outside our own 29 foods. No
-database, no auth, no user accounts. See README.md for the full picture;
-this file is the quick-orientation version for future sessions.
+FastAPI dashboard for BringOn's v0.13 food scoring model, a barcode scanner
+(Open Food Facts) for anything outside our own 29 foods, and a client-side
+QUANTITY calculator (`/behoefte`, inspired by the FQQ v0.20 research
+prototype). No database, no auth, no user accounts — the QUANTITY layer's
+personal-data inputs never leave the browser, on purpose. See README.md for
+the full picture; this file is the quick-orientation version for future
+sessions.
 
 ## What NOT to do
 
@@ -33,6 +36,24 @@ this file is the quick-orientation version for future sessions.
   `style.css` — a same-specificity class rule loaded after it (e.g. `.btn`)
   can otherwise leave a `hidden` element visible; hit this for real with
   the scan page's "Stop camera" button.
+- **Never move QUANTITY's personal-data inputs (weight, height, FFM,
+  measured REE, activity, "eaten today") to the server.** `quantity.js` is
+  the whole reason this app can do body-based personalization without a
+  database or accounts — if a future change sends any of this to an API
+  route, that's a new personal-health-data-storage system and needs the
+  same "check with the user first" treatment as a database would.
+- **Do not add a geography-based energy prior, or any FORM (can-this-
+  person-eat-this) safety filter (allergens etc.), without checking with
+  the user first.** Both were explicitly scoped out of the FQQ v0.20
+  integration — geography for stereotyping risk even with a "prior, not a
+  claim" framing, FORM because a false negative on an allergen is a real
+  safety failure that needs a far more rigorous dataset than this project
+  has. See README.md "The QUANTITY layer" for the full reasoning.
+- Every QUANTITY-adjacent number is a population-average estimate
+  (Katch-McArdle, Mifflin-St Jeor, EU reference intake), never measured
+  metabolism. Keep the "onderzoeksprototype, geen medisch of diëtistisch
+  advies" framing wherever this shows up in the UI — don't let a redesign
+  quietly drop it.
 
 ## Deployment
 
